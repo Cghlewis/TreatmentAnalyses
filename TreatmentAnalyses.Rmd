@@ -1,0 +1,307 @@
+---
+title: "Treatment Analyses"
+author: "Crystal Lewis"
+date: "1/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(haven)
+library(knitr)
+library(furniture)
+library(jtools)
+library(kableExtra)
+library(ggplot2)
+```
+
+```{r, echo=FALSE}
+#Read in data and drop cases with na
+#Recode categorical vars
+MARS<-read_sav("TreatmentData.sav")%>%mutate(Race=as.numeric(Race),
+                                                        Female=as.numeric(Female),
+                                                        Age=as.numeric(Age),
+                                                        Group=as.numeric(Group))
+MARS<-MARS%>%drop_na()
+
+```
+
+```{r, echo=FALSE}
+#Recode Race and Gender
+MARS<-MARS%>%mutate(Race= recode_factor(Race, `0`='White', `2` = 'Non-White',
+                                        `1`='Non-White'))
+
+MARS<-MARS%>%mutate(Gender= recode_factor(Female, `0`='Male', `1`='Female'))
+
+MARS<-MARS%>%mutate(GradeLevel=recode_factor(Age, `1`='Elementary', `2`='Secondary'))
+
+MARS<-MARS%>%mutate(Group=recode_factor(Group, `0`='Control', `1`='Treatment'))
+```
+
+## Summary table for categorical variables
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+MARS2<-MARS%>%select("Race", "Gender", "GradeLevel", "Group",
+                     "GSET1_TRS":"SchoolProbsT1_TRS", "EmotionalSympT1_SRP":
+                       "SchoolProbsT1_SRP")
+
+MARS2%>%group_by(Group)%>%table1(Race, Gender, GradeLevel,
+                  format_number = TRUE, 
+                  test = TRUE,
+                 output="pandoc")
+```
+
+## Summary table for baseline BASC variables
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+MARS2%>%group_by(Group)%>%table1(GSET1_TRS,
+AdaptSkillsT1_TRS,
+BehavioralSymT1_TRS,
+ExternalizingT1_TRS,
+InternalizingT1_TRS,
+SchoolProbsT1_TRS,
+EmotionalSympT1_SRP,
+InternalizingT1_SRP,
+PersonalAdjustT1_SRP,
+SchoolProbsT1_SRP,
+                  format_number = TRUE, 
+                  test = TRUE,
+                 output="pandoc")
+```
+
+```{r, echo=FALSE, eval=FALSE}
+T<-tableone::CreateTableOne(data=MARS2, strata = "Group", test=FALSE)
+
+print(T,showAllLevels=TRUE,output="html")
+```
+
+
+```{r, echo=FALSE}
+#Create scaled outcomes
+
+MARS$ODR2scale<-scale(MARS$ODR2)
+
+MARS$OSS2scale<-scale(MARS$OSS2)
+
+MARS$ELA2scale<-scale(MARS$ELA2)
+
+MARS$Math2scale<-scale(MARS$Math2)
+
+MARS$Minor2scale<-scale(MARS$Minor2)
+
+MARS$GSET2_TRSscale<-scale(MARS$GSET2_TRS)
+
+MARS$AdaptSkillsT2_TRSscale<-scale(MARS$AdaptSkillsT2_TRS)
+
+MARS$BehavioralSymT2_TRSscale<-scale(MARS$BehavioralSymT2_TRS)
+
+MARS$ExternalizingT2_TRSscale<-scale(MARS$ExternalizingT2_TRS)
+
+MARS$InternalizingT2_TRSscale<-scale(MARS$InternalizingT2_TRS)
+
+MARS$SchoolProbsT2_TRSscale<-scale(MARS$SchoolProbsT2_TRS)
+
+MARS$EmotionalSympT2_SRPscale<-scale(MARS$EmotionalSympT2_SRP)
+
+MARS$InternalizingT2_SRPscale<-scale(MARS$InternalizingT2_SRP)
+
+MARS$PersonalAdjustT2_SRPscale<-scale(MARS$PersonalAdjustT2_SRP)
+
+MARS$SchoolProbsT2_SRPscale<-scale(MARS$SchoolProbsT2_SRP)
+```
+
+## School Outcome Models
+
+### ODR
+```{r, echo=FALSE}
+
+lm1scale<-lm(ODR2scale~ Gender+ Race+ ODR1 + GradeLevel+ Group,data=MARS)
+
+lm1<-lm(ODR2~ Gender+ Race+ ODR1 + GradeLevel+ Group,data=MARS)
+
+export_summs(lm1scale,lm1, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### OSS
+```{r, echo=FALSE}
+lm2scale<-lm(OSS2scale~ Gender+ Race+ OSS1 + GradeLevel+ Group,data=MARS)
+
+lm2<-lm(OSS2~ Gender+ Race+ OSS1 + GradeLevel+ Group,data=MARS)
+
+export_summs(lm2scale, lm2,model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### ELA
+```{r, echo=FALSE}
+
+lm3scale<-lm(ELA2scale~ Gender+ Race+ ELA1+ GradeLevel+ Group,data=MARS)
+
+lm3<-lm(ELA2~ Gender+ Race+ ELA1+ GradeLevel+ Group,data=MARS)
+
+export_summs(lm3scale,lm3,model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Math
+```{r, echo=FALSE}
+lm4scale<-lm(Math2scale~ Gender+ Race+ Math1 + GradeLevel+ Group,data=MARS)
+
+lm4<-lm(Math2~ Gender+ Race+ Math1 + GradeLevel+ Group,data=MARS)
+
+export_summs(lm4scale,lm4,model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### MinorODR
+```{r, echo=FALSE}
+
+lm5scale<-lm(Minor2scale~ Gender+ Race+ Minor1 + GradeLevel+ Group,data=MARS)
+
+lm5<-lm(Minor2~ Gender+ Race+ Minor1 + GradeLevel + Group,data=MARS)
+
+export_summs(lm5scale,lm5,model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Graph of school outcomes
+```{r, echo=FALSE}
+plot_summs(lm2scale, lm3scale, lm1scale, lm4scale, lm5scale,
+           coefs=c("Treatment"="GroupTreatment"),
+           model.names=c("OSS", "ELA", "ODR", "Math", "Minor ODR"),
+           colors=c("black","black", "black", "black", "black"), 
+           point.shape=TRUE,legend.title="Student School Outcome")+ coord_flip()+
+  ylab("Largest to Smallest Effect Size")
+
+```
+
+## SRP Models
+
+### Emotional Symptoms
+```{r, echo=FALSE}
+lm6scale<-lm(EmotionalSympT2_SRPscale~ Gender+ Race+ EmotionalSympT1_SRP + GradeLevel+ Group,data=MARS)
+
+lm6<-lm(EmotionalSympT2_SRP~ Gender+ Race+ EmotionalSympT1_SRP + GradeLevel+ Group,data=MARS)
+
+export_summs(lm6scale,lm6, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Internalizing
+```{r, echo=FALSE}
+lm7scale<-lm(InternalizingT2_SRPscale~ Gender+ Race+ InternalizingT1_SRP + GradeLevel+ Group,data=MARS)
+
+lm7<-lm(InternalizingT2_SRP~ Gender+ Race+ InternalizingT1_SRP + GradeLevel+ Group,data=MARS)
+
+export_summs(lm7scale,lm7, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Personal Adjustment
+```{r, echo=FALSE}
+lm8scale<-lm(PersonalAdjustT2_SRPscale~ Gender+ Race+ PersonalAdjustT1_SRP + GradeLevel+ Group,data=MARS)
+
+lm8<-lm(PersonalAdjustT2_SRP~ Gender+ Race+ PersonalAdjustT1_SRP + GradeLevel+ Group,data=MARS)
+
+export_summs(lm8scale,lm8, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+
+### School Problems
+```{r, echo=FALSE}
+lm9scale<-lm(SchoolProbsT2_SRPscale~ Gender+ Race+ SchoolProbsT1_SRP + GradeLevel+ Group,data=MARS)
+
+lm9<-lm(SchoolProbsT2_SRP~ Gender+ Race+ SchoolProbsT1_SRP + GradeLevel+ Group,data=MARS)
+
+export_summs(lm9scale,lm9, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+
+### Graph of SRP outcomes
+```{r, echo=FALSE}
+plot_summs(lm9scale, lm8scale, lm6scale, lm7scale,
+           coefs=c("Treatment"="GroupTreatment"),
+           model.names=c("School Problems", "Personal Adjustment",
+                          "Emotional Symptoms",  "Internalizing"),
+           colors=c("black", "black", "black", "black"), 
+           point.shape=TRUE,legend.title="BASC SRP Outcome")+ coord_flip()+
+  ylab("Largest to Smallest Effect Size")
+```
+
+
+## TRS Models
+
+### GSE
+```{r, echo=FALSE}
+lm10scale<-lm(GSET2_TRSscale~ Gender+ Race+ GSET1_TRS + GradeLevel+ Group,data=MARS)
+
+lm10<-lm(GSET2_TRS~ Gender+ Race+ GSET1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm10scale,lm10, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Adapt Skills
+```{r, echo=FALSE}
+lm11scale<-lm(AdaptSkillsT2_TRSscale~ Gender+ Race+ AdaptSkillsT1_TRS + GradeLevel+ Group,data=MARS)
+
+lm11<-lm(AdaptSkillsT2_TRS~ Gender+ Race+ AdaptSkillsT1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm11scale,lm11, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Behavioral Symptoms
+```{r, echo=FALSE}
+lm12scale<-lm(BehavioralSymT2_TRSscale~ Gender+ Race+ BehavioralSymT1_TRS + GradeLevel+ Group,data=MARS)
+
+lm12<-lm(BehavioralSymT2_TRS~ Gender+ Race+ BehavioralSymT1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm12scale,lm12, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Externalizing
+```{r, echo=FALSE}
+lm13scale<-lm(ExternalizingT2_TRSscale~ Gender+ Race+ ExternalizingT1_TRS + GradeLevel+ Group,data=MARS)
+
+lm13<-lm(ExternalizingT2_TRS~ Gender+ Race+ ExternalizingT1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm13scale,lm13, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Internalizing
+```{r, echo=FALSE}
+lm14scale<-lm(InternalizingT2_TRSscale~ Gender+ Race+ InternalizingT1_TRS + GradeLevel+ Group,data=MARS)
+
+lm14<-lm(InternalizingT2_TRS~ Gender+ Race+ InternalizingT1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm14scale,lm14, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### School Problems
+```{r, echo=FALSE}
+lm15scale<-lm(SchoolProbsT2_TRSscale~ Gender+ Race+ SchoolProbsT1_TRS + GradeLevel+ Group,data=MARS)
+
+lm15<-lm(SchoolProbsT2_TRS~ Gender+ Race+ SchoolProbsT1_TRS + GradeLevel+ Group,data=MARS)
+
+export_summs(lm15scale,lm15, model.names = c("Standardized","Unstandardized"),
+             coefs=c("Treatment"="GroupTreatment"))
+```
+
+### Graph of TRS outcomes
+```{r, echo=FALSE}
+plot_summs(lm15scale,lm13scale, lm14scale,lm12scale, lm11scale, lm10scale,
+           coefs=c("Treatment"="GroupTreatment"),
+           model.names=c("School Problems","Externalizing",
+                         "Internalizing", 
+                         "Behavioral Symptoms","Adaptation Skills", 
+                         "GSE"),
+           colors=c("black", "black", "black", 
+                    "black", "black", "black"), 
+           point.shape=TRUE,legend.title="BASC TRS Outcome")+ coord_flip()+
+  ylab("Largest to Smallest Effect Size")
+```
